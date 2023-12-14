@@ -1,64 +1,52 @@
-# Import the necessary packages
-import discord
-from discord.ext import commands
-import os
-import logging
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler, PicklePersistence
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, CallbackContext
 
-# Enable logging
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Set your bot token and bot username
-TOKEN = 'YOUR_BOT_TOKEN'
-BOT_USERNAME = 'YOUR_BOT_USERNAME'
-
-bot = commands.Bot(command_prefix='!')
+# Dictionary to store movie information
+movie_database = {}
 
 def start(update: Update, context: CallbackContext) -> None:
-    """Send a message when the command /start is issued."""
-    update.message.reply_text('Hi! I can help you find the movie you want to watch.')
+    update.message.reply_text('Welcome to the Movie Bot! Send /addmovie [name] [details] to add a movie.')
 
-def help_command(update: Update, context: CallbackContext) -> None:
-    """Send a message when the command /help is issued."""
-    update.message.reply_text('Just send me the name of the movie you want to watch and I will find it for you.')
+def add_movie(update: Update, context: CallbackContext) -> None:
+    args = context.args
+    if len(args) < 2:
+        update.message.reply_text('Please provide both movie name and details.')
+        return
 
-def search_movie(update: Update, context: CallbackContext) -> None:
-    """Search for a movie by its name."""
-    # Add your own code to search for the movie using an API like TMDB or IMDB.
-    # You can also use web scraping libraries like BeautifulSoup or Scrapy.
+    name = args[0]
+    details = ' '.join(args[1:])
+    
+    # Add the movie to the database
+    movie_database[name] = details
 
-    # Once you have the movie data, you can send it to the user.
-    update.message.reply_text('Here is the movie you were looking for: [Title, Year, Genre, etc.]')
+    update.message.reply_text(f'Movie "{name}" added successfully.')
+
+def get_movie(update: Update, context: CallbackContext) -> None:
+    args = context.args
+    if not args:
+        update.message.reply_text('Please provide the name of the movie.')
+        return
+
+    name = ' '.join(args)
+
+    # Check if the movie is in the database
+    if name in movie_database:
+        details = movie_database[name]
+        update.message.reply_text(f'Movie: {name}\nDetails: {details}')
+    else:
+        update.message.reply_text('Movie not found in the database.')
 
 def main() -> None:
-    """Start the bot."""
-    # Create the Updater and pass it your bot's token.
-    # Make sure to set use_context=True to use the new context based callbacks.
-    updater = Updater(TOKEN, use_context=True)
+    updater = Updater('YOUR_TELEGRAM_BOT_TOKEN')
 
-    # Get the dispatcher to register handlers.
     dp = updater.dispatcher
 
-    # Register the command handlers.
     dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("help", help_command))
+    dp.add_handler(CommandHandler("addmovie", add_movie))
+    dp.add_handler(CommandHandler("getmovie", get_movie))
 
-    # Register the message handler.
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, search_movie))
-
-    # Start the Bot.
     updater.start_polling()
-
-    # Run the bot until you press Ctrl-C or the process receives SIGINT,
-    # SIGTERM or SIGABRT. This should be used most of the time, since
-    # start_polling() is non-blocking and will stop the bot gracefully.
     updater.idle()
-
-# Log your bot in using the token
-bot.run(TOKEN)
 
 if __name__ == '__main__':
     main()
