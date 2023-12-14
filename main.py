@@ -1,3 +1,6 @@
+# Import the necessary packages
+import discord
+from discord.ext import commands
 import os
 import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -11,6 +14,8 @@ logger = logging.getLogger(__name__)
 # Set your bot token and bot username
 TOKEN = 'YOUR_BOT_TOKEN'
 BOT_USERNAME = 'YOUR_BOT_USERNAME'
+
+bot = commands.Bot(command_prefix='!')
 
 def start(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /start is issued."""
@@ -51,6 +56,9 @@ def main() -> None:
     # SIGTERM or SIGABRT. This should be used most of the time, since
     # start_polling() is non-blocking and will stop the bot gracefully.
     updater.idle()
+
+# Log your bot in using the token
+bot.run(TOKEN)
 
 if __name__ == '__main__':
     main()
